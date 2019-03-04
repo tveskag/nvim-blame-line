@@ -12,3 +12,5 @@ ToggleBlameLine
 Usage:
 fx:
 nmap <expr> <leader>c b:ToggleBlameLine()
+
+At the moment this depends on https://github.com/tpope/vim-fugitive to set b:git_dir
