@@ -1,5 +1,10 @@
+if exists('g:blameline_loaded')
+    finish
+endif
+let g:blameline_loaded = 1
+
 function! EnableBlameLine()
-    augroup showGitComments
+    augroup showBlameLine
         autocmd CursorMoved <buffer> call blameballs#GitCommentAnnotate(bufnr('%'), line('.'))
     augroup END
     call blameballs#GitCommentAnnotate(bufnr('%'), line('.'))
