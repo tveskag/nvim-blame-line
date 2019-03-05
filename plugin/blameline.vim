@@ -5,9 +5,9 @@ let g:blameline_loaded = 1
 
 function! EnableBlameLine()
     augroup showBlameLine
-        autocmd CursorMoved <buffer> call blameballs#GitCommentAnnotate(bufnr('%'), line('.'))
+        autocmd CursorMoved <buffer> call blameballs#BlameLineAnnotate(bufnr('%'), line('.'))
     augroup END
-    call blameballs#GitCommentAnnotate(bufnr('%'), line('.'))
+    call blameballs#BlameLineAnnotate(bufnr('%'), line('.'))
 
     let b:ToggleBlameLine = function('DisableBlameLine')
 endfunction
@@ -18,11 +18,18 @@ function! DisableBlameLine()
     let b:ToggleBlameLine = function('EnableBlameLine')
 endfunction
 
-augroup enableGitCommentsOnBufEnter
+function! ToggleBlameLine()
+    call b:ToggleBlameLine()
+endfunction
+
+augroup enableBlameLine
     autocmd!
-    autocmd BufReadPre,FileReadPre * call InitBlameLine()
+    autocmd BufReadPre,FileReadPre,BufEnter * call InitBlameLine()
 augroup END
 function InitBlameLine()
+    if !exists('b:git_dir')
+        let b:git_dir = system('git rev-parse --git-dir')[0]
+    endif
     if !exists('*b:ToggleBlameLine')
         let b:ToggleBlameLine = function('EnableBlameLine')
     endif
