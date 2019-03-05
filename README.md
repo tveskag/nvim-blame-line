@@ -4,17 +4,16 @@ A small plugin that uses neovims virtual text, to print git blame info at the en
 nvim-blame-line prints author, date and summary of the commit belonging to the line underneath the cursor.
 Just like a real IDE!
 
-## Installation:
+### Installation:
 Use a plugin manager like [vim-plug](https://github.com/junegunn/vim-plug)
+
 Plug 'tveskag/nvim-blame-line'
 
-## Usage:
+### Usage:
 the plugin is exposed through the functions:
 
-EnableBlameLine
-
-DisableBlameLine
-
+EnableBlameLine, 
+DisableBlameLine, 
 ToggleBlameLine
 
 example:
