@@ -15,6 +15,8 @@ Plug 'tveskag/nvim-blame-line'
 
 ### Usage:
 
+![example gif](https://github.com/tveskag/nvim-blame-line/blob/master/img/example.gif "Example gif")
+
 #### functions
 the plugin is exposed through the functions:
 
