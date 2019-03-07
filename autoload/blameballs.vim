@@ -22,7 +22,11 @@ function! blameballs#getAnnotation(bufN, lineN)
     endif
     let l:commit = strpart(l:blame[0], 0, 40)
     let l:format = '%an | %ar | %s'
-    let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
+    if l:commit ==# '0000000000000000000000000000000000000000'
+        let l:annotation = ['Not committed yet']
+    else
+        let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
+    endif
     if v:shell_error > 0
         echo l:annotation[-1]
         return
