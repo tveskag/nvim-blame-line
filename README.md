@@ -27,7 +27,7 @@ ToggleBlameLine
 example:
 
 ```
-nmap <expr> <leader>b ToggleBlameLine()
+nmap <silent> <leader>b :ToggleBlameLine<CR>
 ```
 
 #### Options

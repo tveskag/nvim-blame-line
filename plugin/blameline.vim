@@ -29,25 +29,29 @@ function! InitBlameLine()
     endif
 
     if !exists('*b:ToggleBlameLine')
-        let b:ToggleBlameLine = function('EnableBlameLine')
+        let b:ToggleBlameLine = function('blameline#EnableBlameLine')
     endif
 endfunction
 
-function! EnableBlameLine()
+function! blameline#EnableBlameLine()
     augroup showBlameLine
         autocmd CursorMoved <buffer> call s:onCursorMoved(bufnr('%'), line('.'))
     augroup END
     call s:onCursorMoved(bufnr('%'), line('.'))
 
-    let b:ToggleBlameLine = function('DisableBlameLine')
+    let b:ToggleBlameLine = function('blameline#DisableBlameLine')
 endfunction
 
-function! DisableBlameLine()
+function! blameline#DisableBlameLine()
     call s:annotateLine(bufnr('%'), 0, '')
     autocmd! showBlameLine * <buffer>
-    let b:ToggleBlameLine = function('EnableBlameLine')
+    let b:ToggleBlameLine = function('blameline#EnableBlameLine')
 endfunction
 
-function! ToggleBlameLine()
+function! blameline#ToggleBlameLine()
     call b:ToggleBlameLine()
 endfunction
+
+command! ToggleBlameLine :call b:ToggleBlameLine()
+command! EnableBlameLine :call blameline#EnableBlameLine()
+command! DisableBlameLine :call blameline#DisableBlameLine()
