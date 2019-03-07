@@ -14,13 +14,18 @@ endfunction
 
 function! blameballs#getAnnotation(bufN, lineN)
     let l:git_parent = fnamemodify(b:BlameLineGitdir, ':h')
-    let l:blame = systemlist('cd '.l:git_parent.'; git --git-dir='.b:BlameLineGitdir.' --work-tree='.l:git_parent.' blame --contents - '.expand('%:p').' --line-porcelain -L '.a:lineN.','.a:lineN.' -M', a:bufN)
+    let l:gitcommand = 'cd '.l:git_parent.'; git --git-dir='.b:BlameLineGitdir.' --work-tree='.l:git_parent
+    let l:blame = systemlist(l:gitcommand.' annotate --contents - '.expand('%:p').' --porcelain -L '.a:lineN.','.a:lineN.' -M', a:bufN)
     if v:shell_error > 0
         echo l:blame[-1]
         return
     endif
-    let l:author = strpart(l:blame[1], 7)
-    let l:time = strftime("%d/%m %H:%M %Y", strpart(l:blame[3], 12))
-    let l:summary = strpart(l:blame[9], 8)
-    return l:author.' :: '.l:time.' :: '.l:summary
+    let l:commit = strpart(l:blame[0], 0, 40)
+    let l:format = '%an | %ar | %s'
+    let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
+    if v:shell_error > 0
+        echo l:annotation[-1]
+        return
+    endif
+    return l:annotation[0]
 endfunction
