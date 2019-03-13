@@ -13,3 +13,4 @@ augroup END
 command! ToggleBlameLine :call b:ToggleBlameLine()
 command! EnableBlameLine :call blameline#EnableBlameLine()
 command! DisableBlameLine :call blameline#DisableBlameLine()
+command! SingleBlameLine :call blameline#SingleBlameLine()

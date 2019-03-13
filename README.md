@@ -22,12 +22,14 @@ the plugin is exposed through the functions:
 
 EnableBlameLine, 
 DisableBlameLine, 
-ToggleBlameLine
+ToggleBlameLine,
+SingleBlameLine
 
 example:
 
-```
+```viml
 nmap <silent> <leader>b :ToggleBlameLine<CR>
+nmap <silent> <leader>s :SingleBlameLine<CR> " Show blame for a single line.
 ```
 
 #### Options
