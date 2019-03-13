@@ -1,18 +1,36 @@
 function! s:nvimAnnotate(comment, bufN, lineN)
-    call nvim_buf_clear_namespace(a:bufN, s:ns_id, 0, -1)
     call nvim_buf_set_virtual_text(a:bufN, s:ns_id, a:lineN - 1, [[a:comment, "Comment"]], {})
 endfunction
 
+function! s:nvimClearAnnotation(bufN)
+    call nvim_buf_clear_namespace(a:bufN, s:ns_id, 0, -1)
+endfunction
+
+function! s:nvimClearAndAnnotate(comment,bufN, lineN)
+  call s:nvimClearAnnotation(a:bufN)
+  call s:nvimAnnotate(a:comment, a:bufN, a:lineN)
+endfunction
+
 function! s:vimEcho(comment, ...)
-    echo ''
     echom a:comment
+endfunction
+
+function! s:vimClearEcho(...)
+    echo ''
+endfunction
+
+function! s:vimClearAndEcho(comment, ...)
+    call s:vimClearEcho()
+    call s:vimEcho(a:comment)
 endfunction
 
 if has('nvim') && has('nvim-0.3.4') && (g:blameLineUseVirtualText)
     let s:ns_id = nvim_create_namespace('nvim-blame-line')
-    let s:annotateLine = function('s:nvimAnnotate')
+    let s:annotateLine = function('s:nvimClearAndAnnotate')
+    let s:clearAnnotation = function('s:nvimClearAnnotation')
 else
-    let s:annotateLine = function('s:vimEcho')
+    let s:annotateLine = function('s:vimClearAndEcho')
+    let s:clearAnnotation = function('s:vimClearEcho')
 endif
 
 function! s:getAnnotation(bufN, lineN)
@@ -57,6 +75,15 @@ function! s:createCursorHandler(bufN)
     endif
 endfunction
 
+function! s:createCursorHandlerSingle(bufN)
+    function! s:handler(buffer, ...) closure
+        call s:clearAnnotation(a:buffer)
+        autocmd! clearBlameLine * <buffer>
+    endfunction
+
+    return function('s:handler', [a:bufN])
+endfunction
+
 function! blameline#InitBlameLine()
     if !exists('*b:ToggleBlameLine')
         let b:BlameLineGitdir = systemlist('cd '.expand('%:p:h').'; git rev-parse --git-dir')[-1]
@@ -90,4 +117,14 @@ function! blameline#DisableBlameLine()
     call s:annotateLine('', bufnr('%'), 1)
     autocmd! showBlameLine * <buffer>
     let b:ToggleBlameLine = function('blameline#EnableBlameLine')
+endfunction
+
+function! blameline#SingleBlameLine()
+    let l:comment = s:getAnnotation(bufnr('%'), line('.'))
+    call s:annotateLine(l:comment, bufnr('%'), line('.'))
+
+    let b:onCursorMoved = s:createCursorHandlerSingle(bufnr('%'))
+    augroup clearBlameLine
+        autocmd CursorMoved <buffer> call b:onCursorMoved(line('.'))
+    augroup END
 endfunction
