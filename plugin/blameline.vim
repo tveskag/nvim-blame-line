@@ -28,29 +28,8 @@ function! InitBlameLine()
     endif
 endfunction
 
-function! s:createCursorHandler(bufN)
-    function! s:handler(lineN) closure
-        let l:comment = blameballs#getAnnotation(a:bufN, a:lineN)
-        call s:annotateLine(a:bufN, a:lineN, l:comment)
-    endfunction
-
-    if has('timers') && has('lambda')
-        let l:cursorTimer = 0
-
-        function! s:debouncedHandler(lineN) closure
-            call timer_stop(l:cursorTimer)
-            let l:cursorTimer = timer_start(20, {-> s:handler(a:lineN)})
-        endfunction
-
-        return funcref('s:debouncedHandler')
-    else
-        return funcref('s:handler')
-    endif
-endfunction
-
-
 function! blameline#EnableBlameLine()
-    let s:onCursorMoved = s:createCursorHandler(bufnr('%'))
+    let s:onCursorMoved = blameballs#createCursorHandler(bufnr('%'))
     augroup showBlameLine
         autocmd CursorMoved <buffer> call s:onCursorMoved(line('.'))
     augroup END

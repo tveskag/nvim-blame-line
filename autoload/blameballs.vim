@@ -1,7 +1,11 @@
+if has('nvim-0.3.2')
+    let s:ns_id = nvim_create_namespace('blame-line')
+endif
+
 function! blameballs#nvimAnnotate(bufN, lineN, comment)
-    call nvim_buf_clear_namespace(a:bufN, 614, 0, -1)
+    call nvim_buf_clear_namespace(a:bufN, s:ns_id, 0, -1)
     if a:comment !=# ''
-        call nvim_buf_set_virtual_text(a:bufN, 614, a:lineN - 1, [[a:comment, "Comment"]], {})
+        call nvim_buf_set_virtual_text(a:bufN, s:ns_id, a:lineN - 1, [[a:comment, "Comment"]], {})
     endif
 endfunction
 
@@ -32,4 +36,24 @@ function! blameballs#getAnnotation(bufN, lineN)
         return
     endif
     return l:annotation[0]
+endfunction
+
+function! blameballs#createCursorHandler(bufN)
+    function! s:handler(lineN) closure
+        let l:comment = blameballs#getAnnotation(a:bufN, a:lineN)
+        call s:annotateLine(a:bufN, a:lineN, l:comment)
+    endfunction
+
+    if has('timers') && has('lambda')
+        let l:cursorTimer = 0
+
+        function! s:debouncedHandler(lineN) closure
+            call timer_stop(l:cursorTimer)
+            let l:cursorTimer = timer_start(20, {-> s:handler(a:lineN)})
+        endfunction
+
+        return funcref('s:debouncedHandler')
+    else
+        return funcref('s:handler')
+    endif
 endfunction
