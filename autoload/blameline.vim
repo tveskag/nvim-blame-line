@@ -1,6 +1,6 @@
 function! s:nvimAnnotate(comment, bufN, lineN)
     call nvim_buf_clear_namespace(a:bufN, s:ns_id, 0, -1)
-    call nvim_buf_set_virtual_text(a:bufN, s:ns_id, a:lineN - 1, [[a:comment, "Comment"]], {})
+    call nvim_buf_set_virtual_text(a:bufN, s:ns_id, a:lineN - 1, [[a:comment, g:blameLineVirtualTextHighlight]], {})
 endfunction
 
 function! s:vimEcho(comment, ...)
@@ -34,7 +34,7 @@ function! s:getAnnotation(bufN, lineN)
         call s:vimEcho(l:annotation[-1])
         return ''
     endif
-    return l:annotation[0]
+    return g:blameLineVirtualTextPrefix . l:annotation[0]
 endfunction
 
 function! s:createCursorHandler(bufN)

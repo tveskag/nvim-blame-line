@@ -4,6 +4,8 @@ endif
 let g:blameline_loaded = 1
 
 let g:blameLineUseVirtualText = get(g:, 'blameLineUseVirtualText', 1)
+let g:blameLineVirtualTextHighlight = get(g:, 'blameLineVirtualTextHighlight', 'Comment')
+let g:blameLineVirtualTextPrefix = get(g:, 'blameLineVirtualTextPrefix', '')
 
 augroup enableBlameLine
     autocmd!
