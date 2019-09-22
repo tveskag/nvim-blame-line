@@ -64,8 +64,11 @@ function! blameline#InitBlameLine()
             let b:ToggleBlameLine = function('s:vimEcho', [b:BlameLineGitdir])
             return
         endif
+        if b:BlameLineGitdir[0] !=# '/'
+            let b:BlameLineGitdir = expand('%:p:h').'/'.b:BlameLineGitdir
+        endif
 
-        let l:rel_to_git_parent = substitute(expand('%:p'), fnamemodify(b:BlameLineGitdir, ':h').'/', '', '')
+        let l:rel_to_git_parent = substitute(expand('%:p'), escape(fnamemodify(b:BlameLineGitdir, ':h').'/', '.'), '', '')
         let l:fileExists = systemlist('cd '.expand('%:p:h').'; git cat-file -e HEAD:'.l:rel_to_git_parent)
         if v:shell_error > 0
             let b:ToggleBlameLine = function('s:vimEcho', l:fileExists)
