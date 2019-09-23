@@ -26,11 +26,18 @@ The plugin is exposed through these commands:
 - `EnableBlameLine`
 - `DisableBlameLine`
 - `ToggleBlameLine`
+- `SingleBlameLine`
 
 Example mapping:
 
 ```vim
 nnoremap <silent> <leader>b :ToggleBlameLine<CR>
+```
+
+Use autocmd to enable on startup:
+
+```vim
+autocmd BufEnter * EnableBlameLine
 ```
 
 ### Options
@@ -44,4 +51,8 @@ let g:blameLineVirtualTextHighlight = 'Question'
 
 " Add a prefix to the virtual text (empty by default)
 let g:blameLineVirtualTextPrefix = '// '
+
+" Customize format for git blame (Default format: '%an | %ar | %s')
+let g:blameLineGitFormat = '%an - %s'
+" Refer to 'git-show --format=' man pages for format options)
 ```
