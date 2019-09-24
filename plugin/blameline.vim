@@ -7,16 +7,14 @@ let g:blameLineGitFormat = get(g:, 'blameLineGitFormat', '%an | %ar | %s')
 let g:blameLineUseVirtualText = get(g:, 'blameLineUseVirtualText', 1)
 let g:blameLineVirtualTextHighlight = get(g:, 'blameLineVirtualTextHighlight', 'Comment')
 let g:blameLineVirtualTextPrefix = get(g:, 'blameLineVirtualTextPrefix', '')
+let g:blameLineVerbose = get(g:, 'blameLineVerbose', 0)
 
-augroup enableBlameLine
-    autocmd!
-    autocmd BufReadPre,FileReadPre * call s:InitBlameLine()
-augroup END
+function s:createError(error)
+    return g:blameLineVerbose ? {-> s:vimEcho(a:error) && s:DisableBlameLine()} : {-> s:DisableBlameLine()}
+endfunction
 
-command! ToggleBlameLine :call b:ToggleBlameLine()
-command! EnableBlameLine :call s:EnableBlameLine()
-command! DisableBlameLine :call s:DisableBlameLine()
-command! SingleBlameLine :call s:SingleBlameLine()
+let s:blameLineNsId = g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4') ? 
+    \ nvim_create_namespace('nvim-blame-line') : 0
 
 function! s:nvimAnnotate(comment, bufN, lineN)
     call nvim_buf_clear_namespace(a:bufN, s:blameLineNsId, 0, -1)
@@ -25,30 +23,23 @@ endfunction
 
 function! s:vimEcho(comment, ...)
     mode
-    if string(a:comment) ==# ''
-        return 0
-    endif
-    echom string(a:comment)
+    echom 'nvim-blame-line Error: ' . string(a:comment)
     return 1
 endfunction
 
-function! s:setOutputFunc()
-    if g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4')
-        let s:blameLineNsId = nvim_create_namespace('nvim-blame-line')
-        let s:annotateLine = function('s:nvimAnnotate')
-    else
-        let s:annotateLine = function('s:vimEcho')
+function! s:clearAll()
+    mode
+    if s:blameLineNsId
+        call nvim_buf_clear_namespace(a:bufN, s:blameLineNsId, 0, -1)
     endif
 endfunction
-call s:setOutputFunc()
-let b:onCursorMoved = {-> s:vimEcho('Blame Line not yet initialized')}
 
 function! s:getAnnotation(bufN, lineN, gitdir)
     let l:git_parent = fnamemodify(a:gitdir, ':h')
     let l:gitcommand = 'cd '.l:git_parent.'; git --git-dir='.a:gitdir.' --work-tree='.l:git_parent
     let l:blame = systemlist(l:gitcommand.' annotate --contents - '.expand('%:p').' --porcelain -L '.a:lineN.','.a:lineN.' -M', a:bufN)
     if v:shell_error > 0
-        call s:vimEcho(l:blame)
+        let b:onCursorMoved = s:createError(l:blame)
     endif
     let l:commit = strpart(l:blame[0], 0, 40)
     let l:format = g:blameLineGitFormat
@@ -58,15 +49,15 @@ function! s:getAnnotation(bufN, lineN, gitdir)
         let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
     endif
     if v:shell_error > 0
-        call s:vimEcho(l:annotation)
+        let b:onCursorMoved = s:createError(l:annotation)
     endif
     return g:blameLineVirtualTextPrefix . l:annotation[0]
 endfunction
 
-function! s:createCursorHandler(bufN, gitdir)
+function! s:createCursorHandler(bufN, gitdir, anno)
     function! s:handler(buf, lineN) closure
         let l:comment = s:getAnnotation(a:buf, a:lineN, a:gitdir)
-        call s:annotateLine(l:comment, a:buf, a:lineN)
+        call a:anno(l:comment, a:buf, a:lineN)
     endfunction
 
     if has('timers') && has('lambda')
@@ -81,30 +72,32 @@ function! s:createCursorHandler(bufN, gitdir)
     endif
 endfunction
 
-function! s:InitBlameLine()
-    if !exists('*b:ToggleBlameLine')
-        call s:setOutputFunc()
-        let b:ToggleBlameLine = function('s:EnableBlameLine')
-        let l:BlameLineGitdir = systemlist('cd '.expand('%:p:h').'; git rev-parse --git-dir')[-1]
-        if v:shell_error > 0
-            let b:onCursorMoved = {-> s:vimEcho(l:BlameLineGitdir) && s:DisableBlameLine()}
-            return
-        endif
-        if l:BlameLineGitdir[0] !=# '/'
-            let l:BlameLineGitdir = expand('%:p:h').'/'.l:BlameLineGitdir
-        endif
-
-        let l:rel_to_git_parent = substitute(expand('%:p'), escape(fnamemodify(l:BlameLineGitdir, ':h').'/', '.'), '', '')
-        let l:fileExists = systemlist('cd ' . expand('%:p:h') . '; git cat-file -e HEAD:' . l:rel_to_git_parent)
-        if v:shell_error > 0
-            let b:onCursorMoved = {-> s:vimEcho(l:fileExists) && s:DisableBlameLine()}
-            return
-        endif
-        let b:onCursorMoved = s:createCursorHandler(bufnr('%'), l:BlameLineGitdir)
+function s:getCursorHandler()
+    let b:ToggleBlameLine = function('s:EnableBlameLine')
+    let l:BlameLineGitdir = systemlist('cd '.expand('%:p:h').'; git rev-parse --git-dir')[-1]
+    if v:shell_error > 0
+        return s:createError(l:BlameLineGitdir)
     endif
+    if l:BlameLineGitdir[0] !=# '/'
+        let l:BlameLineGitdir = expand('%:p:h').'/'.l:BlameLineGitdir
+    endif
+
+    let l:rel_to_git_parent = substitute(expand('%:p'), escape(fnamemodify(l:BlameLineGitdir, ':h').'/', '.'), '', '')
+    let l:fileExists = systemlist('cd ' . expand('%:p:h') . '; git cat-file -e HEAD:' . l:rel_to_git_parent)
+    if v:shell_error > 0
+        return s:createError(l:fileExists)
+    endif
+    return s:createCursorHandler(bufnr('%'), l:BlameLineGitdir, s:blameLineNsId ? funcref('s:nvimAnnotate') : funcref('s:vimEcho'))
+endfunction
+
+function! s:InitBlameLine()
+    let b:onCursorMoved = !exists('*b:ToggleBlameLine') ? s:getCursorHandler() : s:createError('Blameline failed at init')
 endfunction
 
 function! s:SingleBlameLine()
+    if !exists('*b:onCursorMoved')
+        let b:onCursorMoved = s:createError('Blameline failed')
+    endif
     call b:onCursorMoved(line('.'))
     augroup showBlameLine
         autocmd! CursorMoved <buffer> call s:DisableBlameLine()
@@ -112,6 +105,9 @@ function! s:SingleBlameLine()
 endfunction
 
 function! s:EnableBlameLine()
+    if !exists('*b:onCursorMoved')
+        let b:onCursorMoved = s:createError('Blameline failed')
+    endif
     augroup showBlameLine
         autocmd CursorMoved <buffer> call b:onCursorMoved(line('.'))
     augroup END
@@ -120,7 +116,17 @@ function! s:EnableBlameLine()
 endfunction
 
 function! s:DisableBlameLine()
-    call s:annotateLine('', bufnr('%'), 1)
+    call nvim_buf_clear_namespace(bufnr('%'), s:blameLineNsId, 0, -1)
     autocmd! showBlameLine * <buffer>
     let b:ToggleBlameLine = function('s:EnableBlameLine')
 endfunction
+
+augroup enableBlameLine
+    autocmd!
+    autocmd BufReadPre,FileReadPre * call s:InitBlameLine()
+augroup END
+
+command! ToggleBlameLine :call b:ToggleBlameLine()
+command! EnableBlameLine :call s:EnableBlameLine()
+command! DisableBlameLine :call s:DisableBlameLine()
+command! SingleBlameLine :call s:SingleBlameLine()
