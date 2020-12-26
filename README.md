@@ -49,8 +49,8 @@ let g:blameLineUseVirtualText = 0
 " Specify the highlight group used for the virtual text ('Comment' by default)
 let g:blameLineVirtualTextHighlight = 'Question'
 
-" Add a prefix to the virtual text (empty by default)
-let g:blameLineVirtualTextPrefix = '// '
+" Change format of virtual text ('%s' by default)
+let g:blameLineVirtualTextFormat = '/* %s */'
 
 " Customize format for git blame (Default format: '%an | %ar | %s')
 let g:blameLineGitFormat = '%an - %s'

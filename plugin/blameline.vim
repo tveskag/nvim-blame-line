@@ -6,7 +6,7 @@ let g:blameLine_loaded = 1
 let g:blameLineGitFormat = get(g:, 'blameLineGitFormat', '%an | %ar | %s')
 let g:blameLineUseVirtualText = get(g:, 'blameLineUseVirtualText', 1)
 let g:blameLineVirtualTextHighlight = get(g:, 'blameLineVirtualTextHighlight', 'Comment')
-let g:blameLineVirtualTextPrefix = get(g:, 'blameLineVirtualTextPrefix', '')
+let g:blameLineVirtualTextFormat = get(g:, 'blameLineVirtualTextFormat', '%s')
 let g:blameLineVerbose = get(g:, 'blameLineVerbose', 0)
 
 function s:createError(error)
@@ -51,7 +51,7 @@ function! s:getAnnotation(bufN, lineN, gitdir)
     if v:shell_error > 0
         let b:onCursorMoved = s:createError(l:annotation)
     endif
-    return g:blameLineVirtualTextPrefix . l:annotation[0]
+    return printf(g:blameLineVirtualTextFormat, l:annotation[0])
 endfunction
 
 function! s:createCursorHandler(bufN, gitdir, anno)
