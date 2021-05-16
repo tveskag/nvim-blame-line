@@ -8,6 +8,7 @@ let g:blameLineUseVirtualText = get(g:, 'blameLineUseVirtualText', 1)
 let g:blameLineVirtualTextHighlight = get(g:, 'blameLineVirtualTextHighlight', 'Comment')
 let g:blameLineVirtualTextFormat = get(g:, 'blameLineVirtualTextFormat', '%s')
 let g:blameLineVerbose = get(g:, 'blameLineVerbose', 0)
+let g:blameLineMessageWhenNotYetCommited = get(g:, 'blameLineMessageWhenNotYetCommited', 'Not yet committed')
 
 function s:createError(error)
     return g:blameLineVerbose ? {-> s:vimEcho(a:error) && s:DisableBlameLine()} : {-> s:DisableBlameLine()}
@@ -44,7 +45,8 @@ function! s:getAnnotation(bufN, lineN, gitdir)
     let l:commit = strpart(l:blame[0], 0, 40)
     let l:format = g:blameLineGitFormat
     if l:commit ==# '0000000000000000000000000000000000000000'
-        let l:annotation = ['Not yet committed']
+        " show nothing when this line is not yet committed.
+        let l:annotation = [g:blameLineMessageWhenNotYetCommited]
     else
         let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
     endif

@@ -55,4 +55,7 @@ let g:blameLineVirtualTextFormat = '/* %s */'
 " Customize format for git blame (Default format: '%an | %ar | %s')
 let g:blameLineGitFormat = '%an - %s'
 " Refer to 'git-show --format=' man pages for format options)
+
+" Change message when content is not committed
+let g:blameLineMessageWhenNotYetCommited = ''
 ```
