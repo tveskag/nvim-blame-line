@@ -14,7 +14,7 @@ function s:createError(error)
     return g:blameLineVerbose ? {-> s:vimEcho(a:error) && s:DisableBlameLine()} : {-> s:DisableBlameLine()}
 endfunction
 
-let s:blameLineNsId = g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4') ? 
+let s:blameLineNsId = g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4') ?
     \ nvim_create_namespace('nvim-blame-line') : 0
 
 function! s:nvimAnnotate(comment, bufN, lineN)
