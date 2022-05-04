@@ -14,12 +14,12 @@ function s:createError(error)
     return g:blameLineVerbose ? {-> s:vimEcho(a:error) && s:DisableBlameLine()} : {-> s:DisableBlameLine()}
 endfunction
 
-let s:blameLineNsId = g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4') ? 
+let s:blameLineNsId = g:blameLineUseVirtualText && has('nvim') && has('nvim-0.3.4') ?
     \ nvim_create_namespace('nvim-blame-line') : 0
 
 function! s:nvimAnnotate(comment, bufN, lineN)
     call nvim_buf_clear_namespace(a:bufN, s:blameLineNsId, 0, -1)
-    call nvim_buf_set_virtual_text(a:bufN, s:blameLineNsId, a:lineN - 1, [[a:comment, g:blameLineVirtualTextHighlight]], {})
+    call nvim_buf_set_extmark(a:bufN, s:blameLineNsId, a:lineN - 1, 0, {"hl_mode": "combine", "virt_text": [[a:comment, g:blameLineVirtualTextHighlight]]})
 endfunction
 
 function! s:vimEcho(comment, ...)
