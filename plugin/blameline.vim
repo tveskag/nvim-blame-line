@@ -36,9 +36,14 @@ function! s:clearAll()
 endfunction
 
 function! s:getAnnotation(bufN, lineN, gitdir)
-    let l:git_parent = fnamemodify(a:gitdir, ':h')
-    let l:gitcommand = 'cd '.l:git_parent.'; git --git-dir='.a:gitdir.' --work-tree='.l:git_parent
-    let l:blame = systemlist(l:gitcommand.' annotate --contents - '.expand('%:p').' --porcelain -L '.a:lineN.','.a:lineN.' -M', a:bufN)
+    let l:clean_file_path = substitute(expand('%:p'), '.git/worktrees/', '', '')
+    let l:clean_dir = substitute(a:gitdir, '.git/worktrees/', '', '')
+    if len(l:clean_dir) > 3 && l:clean_dir[-4:] == '.git'
+        let l:clean_dir = fnamemodify(l:clean_dir, ':h')
+    endif
+
+    let l:gitcommand = 'git -C '.l:clean_dir
+    let l:blame = systemlist(l:gitcommand.' annotate '.l:clean_file_path.' --porcelain -L '.a:lineN.','.a:lineN.' -M'.a:bufN)
     if v:shell_error > 0
         let b:onCursorMoved = s:createError(l:blame)
     endif
@@ -76,7 +81,7 @@ endfunction
 
 function s:getCursorHandler()
     let b:ToggleBlameLine = function('s:EnableBlameLine')
-    let l:BlameLineGitdir = systemlist('cd '.expand('%:p:h').'; git rev-parse --git-dir')[-1]
+    let l:BlameLineGitdir = systemlist('git -C '.expand('%:p:h').' rev-parse --git-dir')[-1]
     if v:shell_error > 0
         return s:createError(l:BlameLineGitdir)
     endif
@@ -84,8 +89,13 @@ function s:getCursorHandler()
         let l:BlameLineGitdir = expand('%:p:h').'/'.l:BlameLineGitdir
     endif
 
-    let l:rel_to_git_parent = substitute(expand('%:p'), escape(fnamemodify(l:BlameLineGitdir, ':h').'/', '.'), '', '')
-    let l:fileExists = systemlist('cd ' . expand('%:p:h') . '; git cat-file -e HEAD:' . l:rel_to_git_parent)
+    let l:clean_dir = substitute(l:BlameLineGitdir, '.git/worktrees/', '', '')
+    if len(l:clean_dir) > 3 && l:clean_dir[-4:] == '.git'
+        let l:clean_dir = fnamemodify(l:clean_dir, ':h')
+    endif
+
+    let l:rel_to_git_parent = substitute(expand('%:p'), l:clean_dir.'/', '', '')
+    let l:fileExists = systemlist('git -C ' .expand('%:p:h'). ' cat-file -e HEAD:' . l:rel_to_git_parent)
     if v:shell_error > 0
         return s:createError(l:fileExists)
     endif
