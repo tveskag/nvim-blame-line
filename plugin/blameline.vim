@@ -53,7 +53,7 @@ function! s:getAnnotation(bufN, lineN, gitdir)
         " show nothing when this line is not yet committed.
         let l:annotation = [g:blameLineMessageWhenNotYetCommited]
     else
-        let l:annotation = systemlist(l:gitcommand.' show '.l:commit.' --format="'.l:format.'"')
+        let l:annotation = systemlist(l:gitcommand.' show -s '.l:commit.' --format="'.l:format.'"')
     endif
     if v:shell_error > 0
         let b:onCursorMoved = s:createError(l:annotation)
