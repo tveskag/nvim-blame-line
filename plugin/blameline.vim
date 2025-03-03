@@ -40,6 +40,7 @@ function s:getCleanDir(gitdir)
     if len(l:clean_dir) > 3 && l:clean_dir[-4:] == '.git'
         let l:clean_dir = fnamemodify(l:clean_dir, ':h')
     endif
+    return l:clean_dir
 endfunction
 
 function! s:getAnnotation(bufN, lineN, gitdir)
