@@ -35,12 +35,16 @@ function! s:clearAll()
     endif
 endfunction
 
-function! s:getAnnotation(bufN, lineN, gitdir)
-    let l:clean_file_path = substitute(expand('%:p'), '.git/worktrees/', '', '')
+function s:getCleanDir(gitdir)
     let l:clean_dir = substitute(a:gitdir, '.git/worktrees/', '', '')
     if len(l:clean_dir) > 3 && l:clean_dir[-4:] == '.git'
         let l:clean_dir = fnamemodify(l:clean_dir, ':h')
     endif
+endfunction
+
+function! s:getAnnotation(bufN, lineN, gitdir)
+    let l:clean_file_path = substitute(expand('%:p'), '.git/worktrees/', '', '')
+    let l:clean_dir = s:getCleanDir(a:gitdir)
 
     let l:gitcommand = 'git -C '.l:clean_dir
     let l:blame = systemlist(l:gitcommand.' annotate '.l:clean_file_path.' --porcelain -L '.a:lineN.','.a:lineN.' -M'.a:bufN)
@@ -89,11 +93,7 @@ function s:getCursorHandler()
         let l:BlameLineGitdir = expand('%:p:h').'/'.l:BlameLineGitdir
     endif
 
-    let l:clean_dir = substitute(l:BlameLineGitdir, '.git/worktrees/', '', '')
-    if len(l:clean_dir) > 3 && l:clean_dir[-4:] == '.git'
-        let l:clean_dir = fnamemodify(l:clean_dir, ':h')
-    endif
-
+    let l:clean_dir = s:getCleanDir(l:BlameLineGitdir)
     let l:rel_to_git_parent = substitute(expand('%:p'), l:clean_dir.'/', '', '')
     let l:fileExists = systemlist('git -C ' .expand('%:p:h'). ' cat-file -e HEAD:' . l:rel_to_git_parent)
     if v:shell_error > 0
